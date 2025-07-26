@@ -1,38 +1,8 @@
-// const BASE_URL = 'http://localhost:5050/api/products';
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-// export const getProducts = async () => {
-//   const res = await fetch(BASE_URL);
-//   return res.json();
-// };
+const PRODUCTS_BASE_URL = `${BACKEND_BASE_URL}/api/products`;
+const ORDERS_BASE_URL = `${BACKEND_BASE_URL}/api/orders`;
 
-// export const createProduct = async (product: any) => {
-//   const res = await fetch(BASE_URL, {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify(product),
-//   });
-//   return res.json();
-// };
-
-// export const updateProduct = async (id: string, product: any) => {
-//   const res = await fetch(`${BASE_URL}/${id}`, {
-//     method: 'PUT',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify(product),
-//   });
-//   return res.json();
-// };
-
-// export const deleteProduct = async (id: string) => {
-//   const res = await fetch(`${BASE_URL}/${id}`, {
-//     method: 'DELETE',
-//   });
-//   return res.json();
-// };
-
-// LastV2Gemini/lib/api.ts
-const PRODUCTS_BASE_URL = 'http://localhost:5050/api/products';
-const ORDERS_BASE_URL = 'http://localhost:5050/api/orders'; // New base URL for orders
 
 // Product API functions (existing)
 export const getProducts = async () => {
