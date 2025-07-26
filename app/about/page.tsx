@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -29,10 +28,10 @@ export default function AboutPage() {
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-6">The Beginning</h2>
             <p className="text-lg text-gray-700 mb-6">
-              In 1892, in the heart of Grasse, France, master perfumer Henri ENEZZAE founded our house with a simple yet profound vision: to capture the essence of life's most precious moments in exquisite fragrances. What began as a small atelier has evolved into a prestigious maison, yet we remain true to our artisanal roots.
+              In 1892, in the heart of Grasse, France, master perfumer Henri ENEZZAE founded our house with a simple yet profound vision: to capture the essence of life&apos;s most precious moments in exquisite fragrances. What began as a small atelier has evolved into a prestigious maison, yet we remain true to our artisanal roots.
             </p>
             <p className="text-lg text-gray-700">
-              Henri's philosophy was revolutionary for its time - he believed that perfume should not merely scent the body, but illuminate the soul. This belief became the cornerstone of our brand, inspiring the name "ENEZZAE" - French for light.
+              Henri&apos;s philosophy was revolutionary for its time - he believed that perfume should not merely scent the body, but illuminate the soul. This belief became the cornerstone of our brand, inspiring the name &quot;ENEZZAE&quot; - French for light.
             </p>
           </div>
           <div className="relative">
@@ -94,7 +93,7 @@ export default function AboutPage() {
           <div className="order-1 lg:order-2">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Modern Craftsmanship</h2>
             <p className="text-lg text-gray-700 mb-6">
-              Today, our master perfumer Céleste Dubois continues Henri's legacy in our state-of-the-art laboratory. Each fragrance undergoes a meticulous 18-month development process, from initial concept to final bottling.
+              Today, our master perfumer Céleste Dubois continues Henri&apos;s legacy in our state-of-the-art laboratory. Each fragrance undergoes a meticulous 18-month development process, from initial concept to final bottling.
             </p>
             <p className="text-lg text-gray-700 mb-6">
               We blend traditional French perfumery techniques with modern innovation, using only the purest ingredients. Our signature three-tier fragrance architecture - featuring top, heart, and base notes - creates complex, evolving scents that tell a story on your skin.

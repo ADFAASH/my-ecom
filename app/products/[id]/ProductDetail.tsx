@@ -397,7 +397,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                 {subscribedForNotification ? (
                   <div className="text-green-700">
                     <i className="ri-check-circle-line mr-2"></i>
-                    You'll be notified when it's back!
+                    You&apos;ll be notified when it&apos;s back!
                   </div>
                 ) : (
                   <>

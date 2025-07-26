@@ -1,5 +1,3 @@
-
-
 // LastV2Gemini/app/page.tsx
 'use client';
 
@@ -287,7 +285,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Welcome to Lumière</h3>
               <p className="text-white/80">
-                Thank you for subscribing! You'll receive exclusive updates and offers soon.
+                Thank you for subscribing! You&apos;ll receive exclusive updates and offers soon.
               </p>
             </div>
           ) : (

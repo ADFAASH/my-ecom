@@ -448,7 +448,7 @@ const AddProductModal = ({
                         }}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
-                        <X className="w-5 h-5 text-gray-50" />
+                        <X className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
 
@@ -569,7 +569,7 @@ const AddProductModal = ({
                         <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                             <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500">Drag & drop images here or click to browse</p>
+                            <p className="text-gray-500">Drag &amp; drop images here or click to browse</p>
                             <button type="button" className="mt-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                                 Choose Files
                             </button>
@@ -1038,7 +1038,7 @@ export default function AdminDashboard() {
         }
 
         const targetProductState = isEditing ? (editingProduct as Product) : newProduct;
-        let updatedProductState: Product = { ...targetProductState };
+        const updatedProductState: Product = { ...targetProductState }; // Change `let` to `const`
 
         if (!targetProductState) return;
 
@@ -1555,7 +1555,6 @@ export default function AdminDashboard() {
                                         <tbody>
                                             {order.items.map((item, index) => (
                                                 <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50/50 transition-colors">
-                                                    {/* FIX: Ensure no whitespace immediately inside <td> tags */}
                                                     <td className="px-6 py-4 whitespace-nowrap"><div className="flex items-center gap-2">
                                                             <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-purple-100 rounded-md flex items-center justify-center">
                                                                 {(() => {
@@ -1677,7 +1676,7 @@ export default function AdminDashboard() {
                     <div className="space-y-6">
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                            <p className="text-gray-500 mt-1">Welcome back! Here's what's happening with your store.</p>
+                            <p className="text-gray-500 mt-1">Welcome back! Here&apos;s what&apos;s happening with your store.</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -2233,7 +2232,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Store Phone</label>
-                                        <input type="tel" defaultValue="+1 (555) 123-4567" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus://ring-blue-500 focus:border-transparent" />
+                                        <input type="tel" defaultValue="+1 (555) 123-4567" className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-transparent" />
                                     </div>
                                 </div>
                             </div>
