@@ -1,5 +1,3 @@
-// app/products/[id]/page.tsx
-
 import ProductDetail from './ProductDetail';
 
 export async function generateStaticParams() {
@@ -15,6 +13,8 @@ export async function generateStaticParams() {
   ];
 }
 
-export default function ProductPage({ params }: { params: { id: string } }) {
-  return <ProductDetail productId={params.id} />;
+// 🚨 REMOVE type annotation completely — let Next.js infer it
+export default function ProductPage(props: any) {
+  const id = props?.params?.id;
+  return <ProductDetail productId={id} />;
 }
