@@ -1,0 +1,23 @@
+
+
+# General
+.DS_Store
+*.log
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+
+# Next.js
+.next/
+
+# Frontend node_modules
+node_modules/
+
+# Backend node_modules
+backend/node_modules/
+
+# Vercel / Render / Netlify
+.vercel/
+out/
