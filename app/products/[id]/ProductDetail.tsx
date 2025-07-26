@@ -121,7 +121,8 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
     const fetchProduct = async () => {
       try {
         // Change this line:
-        const res = await fetch(`http://localhost:5050/api/products/${productId}`); // Corrected URL/ProductDetail.tsx]
+const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products/${productId}`);
+ // Corrected URL/ProductDetail.tsx]
         if (!res.ok) throw new Error('Failed to fetch product');
         const data = await res.json();
         setProduct(data);
