@@ -24,17 +24,16 @@
 import ProductDetail from './ProductDetail';
 
 export async function generateStaticParams() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products`, {
-    next: { revalidate: 60 }, // optional: for ISR support
-  });
-
-  const products = await res.json();
-
-  return products.map((product: any) => ({
-    id: product._id,
-  }));
+  return []; // or fetch product IDs dynamically if you want pre-rendering
 }
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+type Props = {
+  params: {
+    id: string;
+  };
+};
+
+export default function ProductPage({ params }: Props) {
   return <ProductDetail productId={params.id} />;
 }
+
