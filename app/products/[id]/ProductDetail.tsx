@@ -1,4 +1,3 @@
-// LastV2Gemini/app/products/[id]/ProductDetail.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,8 +13,8 @@ interface Product {
   id: string;
   name: string;
   category: string;
-  price: number; // Main display price, often for the smallest size or a default
-  pricePer10Ml: number; // Added from admin/page.tsx to enable price calculation
+  price: number; // Main display price, often for the smallest size or a default (now directly from calculatedPrices)
+  // pricePer10Ml: number; // REMOVED THIS LINE
   calculatedPrices: Record<string, number>; // Prices for all sizes
   image: string; // Main image URL for thumbnail/list view
   sizeStocks: Record<string, number>; // NEW: Stock per individual size (e.g., {'30ml': 100, '50ml': 50})
@@ -37,17 +36,17 @@ const parseMlFromString = (sizeString: string): number => {
     return match ? parseFloat(match[1]) : 0;
 };
 
-// Function to calculate ORIGINAL prices for various sizes based on price per 10ml
-const calculateOriginalPricesForSizes = (pricePer10Ml: number, sizes: string[]): Record<string, number> => {
-  const prices: Record<string, number> = {};
-  sizes.forEach(sizeStr => {
-    const ml = parseMlFromString(sizeStr);
-    if (ml > 0 && pricePer10Ml > 0) {
-      prices[sizeStr] = parseFloat(((ml / 10) * pricePer10Ml).toFixed(2));
-    }
-  });
-  return prices;
-};
+// REMOVED: calculateOriginalPricesForSizes function is no longer relevant
+// const calculateOriginalPricesForSizes = (pricePer10Ml: number, sizes: string[]): Record<string, number> => {
+//   const prices: Record<string, number} = {};
+//   sizes.forEach(sizeStr => {
+//     const ml = parseMlFromString(sizeStr);
+//     if (ml > 0 && pricePer10Ml > 0) {
+//       prices[sizeStr] = parseFloat(((ml / 10) * pricePer10Ml).toFixed(2));
+//     }
+//   });
+//   return prices;
+// };
 
 // Helper to determine if a product (overall) is in stock based on its sizeStocks
 const isProductOverallInStock = (sizeStocks: Record<string, number>): boolean => {
@@ -61,7 +60,7 @@ const defaultProductDetails: { [key: string]: Product } = {
     name: 'Midnight Rose',
     category: 'Floral',
     price: 89.99, // Changed to match your image for Midnight Rose
-    pricePer10Ml: 18.5,
+    // pricePer10Ml: 18.5, // REMOVED THIS LINE
     calculatedPrices: {'30ml': 55.5, '50ml': 92.5, '100ml': 185},
     sizeStocks: {'30ml': 20, '50ml': 45, '100ml': 15}, // Example stock per size
     reviews: 124,
@@ -84,7 +83,7 @@ const defaultProductDetails: { [key: string]: Product } = {
     name: 'Ocean Breeze',
     category: 'Fresh',
     price: 82.50, // Price from your image for Ocean Breeze
-    pricePer10Ml: 16.5,
+    // pricePer10Ml: 16.5, // REMOVED THIS LINE
     calculatedPrices: {'30ml': 49.5, '50ml': 82.5, '100ml': 165},
     sizeStocks: {'30ml': 5, '50ml': 8, '100ml': 2}, // Example stock per size, Ocean Breeze stock 8 in 50ml size
     reviews: 89,
@@ -120,9 +119,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Change this line:
-const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products/${productId}`);
- // Corrected URL/ProductDetail.tsx]
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products/${productId}`);
         if (!res.ok) throw new Error('Failed to fetch product');
         const data = await res.json();
         setProduct(data);

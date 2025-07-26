@@ -1,4 +1,3 @@
-// LastV2Gemini/app/admin/page.tsx
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -98,9 +97,9 @@ interface Product {
     id: string;
     name: string;
     category: string;
-    price: number;
-    pricePer10Ml: number;
-    calculatedPrices: Record<string, number>;
+    price: number; // This will now be the price of the smallest size
+    // pricePer10Ml: number; // REMOVED THIS LINE
+    calculatedPrices: Record<string, number>; // Prices for all sizes, directly input
     sizeStocks: Record<string, number>;
     inStock: boolean;
     description: string;
@@ -144,20 +143,10 @@ interface Order {
     _id?: string;
 }
 
+// REMOVED: parseMlFromString and calculatePricesForSizes functions are no longer needed for admin input.
 const parseMlFromString = (sizeString: string): number => {
     const match = sizeString.match(/(\d+)\s*ml/i);
     return match ? parseFloat(match[1]) : 0;
-};
-
-const calculatePricesForSizes = (pricePer10Ml: number, sizes: string[]): Record<string, number> => {
-    const prices: Record<string, number> = {};
-    sizes.forEach(sizeStr => {
-        const ml = parseMlFromString(sizeStr);
-        if (ml > 0 && pricePer10Ml > 0) {
-            prices[sizeStr] = parseFloat(((ml / 10) * pricePer10Ml).toFixed(2));
-        }
-    });
-    return prices;
 };
 
 const isProductOverallInStock = (sizeStocks: Record<string, number>): boolean => {
@@ -174,7 +163,7 @@ const defaultProducts: Product[] = [
         name: 'Midnight Rose',
         category: 'Floral',
         price: 92.5,
-        pricePer10Ml: 18.5,
+        // pricePer10Ml: 18.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 55.5, '50ml': 92.5, '100ml': 185 },
         sizeStocks: { '30ml': 20, '50ml': 45, '100ml': 15 },
         reviews: 124,
@@ -198,7 +187,7 @@ const defaultProducts: Product[] = [
         name: 'Ocean Breeze',
         category: 'Fresh',
         price: 82.5,
-        pricePer10Ml: 16.5,
+        // pricePer10Ml: 16.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 49.5, '50ml': 82.5, '100ml': 165 },
         sizeStocks: { '30ml': 5, '50ml': 8, '100ml': 2 },
         reviews: 89,
@@ -222,7 +211,7 @@ const defaultProducts: Product[] = [
         name: 'Golden Amber',
         category: 'Oriental',
         price: 97.5,
-        pricePer10Ml: 19.5,
+        // pricePer10Ml: 19.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 58.5, '50ml': 97.5, '100ml': 195 },
         sizeStocks: { '30ml': 0, '50ml': 0, '100ml': 0 },
         reviews: 156,
@@ -246,7 +235,7 @@ const defaultProducts: Product[] = [
         name: 'Silk Garden',
         category: 'Floral',
         price: 87.5,
-        pricePer10Ml: 17.5,
+        // pricePer10Ml: 17.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 52.5, '50ml': 87.5, '100ml': 175 },
         sizeStocks: { '30ml': 100, '50ml': 120, '100ml': 80 },
         reviews: 203,
@@ -270,7 +259,7 @@ const defaultProducts: Product[] = [
         name: 'Urban Noir',
         category: 'Oriental',
         price: 105,
-        pricePer10Ml: 21.0,
+        // pricePer10Ml: 21.0, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 63, '50ml': 105, '100ml': 210 },
         sizeStocks: { '30ml': 10, '50ml': 15, '100ml': 5 },
         reviews: 95,
@@ -294,7 +283,7 @@ const defaultProducts: Product[] = [
         name: 'Citrus Dawn',
         category: 'Fresh',
         price: 77.5,
-        pricePer10Ml: 15.5,
+        // pricePer10Ml: 15.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 10, '50ml': 10, '100ml': 10 },
         sizeStocks: { '30ml': 10, '50ml': 10, '100ml': 10 },
         reviews: 78,
@@ -318,7 +307,7 @@ const defaultProducts: Product[] = [
         name: 'Velvet Orchid',
         category: 'Floral',
         price: 112.5,
-        pricePer10Ml: 22.5,
+        // pricePer10Ml: 22.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 67.5, '50ml': 112.5, '100ml': 225 },
         sizeStocks: { '30ml': 50, '50ml': 75, '100ml': 25 },
         reviews: 167,
@@ -342,7 +331,7 @@ const defaultProducts: Product[] = [
         name: 'Mystic Woods',
         category: 'Oriental',
         price: 95,
-        pricePer10Ml: 19.0,
+        // pricePer10Ml: 19.0, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 57, '50ml': 95, '100ml': 190 },
         sizeStocks: { '30ml': 5, '50ml': 12, '100ml': 3 },
         reviews: 134,
@@ -383,8 +372,8 @@ const AddProductModal = ({
     setNewProduct: React.Dispatch<React.SetStateAction<Product>>;
     rawSizesInput: string;
     setRawSizesInput: React.Dispatch<React.SetStateAction<string>>;
-    handleAddProduct: (e: React.FormEvent, sizeStocksData: Record<string, number>) => void; // Updated signature
-    handleUpdateProduct: (e: React.FormEvent, sizeStocksData: Record<string, number>) => void; // Updated signature
+    handleAddProduct: (e: React.FormEvent, sizeStocksData: Record<string, number>, calculatedPricesData: Record<string, number>) => void; // UPDATED SIGNATURE
+    handleUpdateProduct: (e: React.FormEvent, sizeStocksData: Record<string, number>, calculatedPricesData: Record<string, number>) => void; // UPDATED SIGNATURE
     handleFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, isEditing: boolean) => void;
     editingProduct: Product | null;
     setEditingProduct: React.Dispatch<React.SetStateAction<Product | null>>;
@@ -392,38 +381,53 @@ const AddProductModal = ({
 }) => {
     // Local state to manage individual stock inputs
     const [currentSizeStocksInput, setCurrentSizeStocksInput] = useState<Record<string, number>>({});
+    // NEW: Local state to manage individual price inputs
+    const [currentCalculatedPricesInput, setCurrentCalculatedPricesInput] = useState<Record<string, number>>({});
 
-    // Parse rawSizesInput to get a list of current sizes for dynamic stock inputs
+    // Parse rawSizesInput to get a list of current sizes for dynamic inputs
     const currentSizes = rawSizesInput.split(',').map(s => s.trim()).filter(s => s.length > 0);
 
-    // Effect to initialize currentSizeStocksInput when product changes (for editing) or sizes change
+    // Effect to initialize currentSizeStocksInput and currentCalculatedPricesInput
     useEffect(() => {
-        // Use editingProduct's sizeStocks or initialize new for current sizes
         const initialStocks: Record<string, number> = {};
         const sourceStocks = editingProduct?.sizeStocks || {};
 
+        const initialPrices: Record<string, number> = {}; // NEW
+        const sourcePrices = editingProduct?.calculatedPrices || {}; // NEW
+
         currentSizes.forEach(size => {
             initialStocks[size] = sourceStocks[size] || 0;
+            initialPrices[size] = sourcePrices[size] || 0; // NEW
         });
         setCurrentSizeStocksInput(initialStocks);
-    }, [editingProduct, rawSizesInput]); // Depend on editingProduct & rawSizesInput
+        setCurrentCalculatedPricesInput(initialPrices); // NEW
+    }, [editingProduct, rawSizesInput]);
 
     // Handle change for individual stock input fields
     const handleIndividualStockChange = useCallback((size: string, value: string) => {
         const stockValue = parseInt(value);
         setCurrentSizeStocksInput(prevStocks => ({
             ...prevStocks,
-            [size]: isNaN(stockValue) ? 0 : Math.max(0, stockValue) // Ensure non-negative number
+            [size]: isNaN(stockValue) ? 0 : Math.max(0, stockValue)
         }));
     }, []);
 
-    // Wrapper function to pass currentSizeStocksInput to parent's submit handlers
+    // NEW: Handle change for individual price input fields
+    const handleIndividualPriceChange = useCallback((size: string, value: string) => {
+        const priceValue = parseFloat(value);
+        setCurrentCalculatedPricesInput(prevPrices => ({
+            ...prevPrices,
+            [size]: isNaN(priceValue) ? 0 : Math.max(0, priceValue) // Ensure non-negative number
+        }));
+    }, []);
+
+    // Wrapper function to pass local states to parent's submit handlers
     const handleActualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingProduct) {
-            handleUpdateProduct(e, currentSizeStocksInput);
+            handleUpdateProduct(e, currentSizeStocksInput, currentCalculatedPricesInput); // UPDATED CALL
         } else {
-            handleAddProduct(e, currentSizeStocksInput);
+            handleAddProduct(e, currentSizeStocksInput, currentCalculatedPricesInput); // UPDATED CALL
         }
     };
 
@@ -440,11 +444,12 @@ const AddProductModal = ({
                             setShowAddProductModal(false);
                             setEditingProduct(null);
                             setNewProduct({
-                                id: '', name: '', category: 'Floral', price: 0, pricePer10Ml: 0, calculatedPrices: {}, sizeStocks: {},
+                                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
                                 description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                             });
                             setRawSizesInput('');
                             setCurrentSizeStocksInput({}); // Reset local stock input state
+                            setCurrentCalculatedPricesInput({}); // NEW: Reset local price input state
                         }}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
@@ -515,7 +520,8 @@ const AddProductModal = ({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+                        {/* REMOVED: Price Per 10ML Input */}
+                        {/* <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Price Per 10ML ($)</label>
                             <input
                                 type="number"
@@ -526,7 +532,7 @@ const AddProductModal = ({
                                 placeholder="0.00"
                                 required
                             />
-                        </div>
+                        </div> */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Sizes (comma-separated, e.g., 30ml, 50ml, 100ml)</label>
                             <input
@@ -564,6 +570,29 @@ const AddProductModal = ({
                         </div>
                     )}
 
+                    {/* NEW: DYNAMIC PRICE INPUTS */}
+                    {currentSizes.length > 0 && (
+                        <div className="space-y-4 border p-4 rounded-lg bg-gray-50">
+                            <h3 className="text-lg font-semibold text-gray-800">Price per Size ($)</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                {currentSizes.map(size => (
+                                    <div key={`price-${size}`}>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Price for {size}</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01" // Allow decimal for prices
+                                            value={currentCalculatedPricesInput[size] || 0}
+                                            onChange={(e) => handleIndividualPriceChange(size, e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="0.00"
+                                            required
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
@@ -641,11 +670,12 @@ const AddProductModal = ({
                                 setShowAddProductModal(false);
                                 setEditingProduct(null);
                                 setNewProduct({
-                                    id: '', name: '', category: 'Floral', price: 0, pricePer10Ml: 0, calculatedPrices: {}, sizeStocks: {},
+                                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
                                     description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                                 });
                                 setRawSizesInput('');
                                 setCurrentSizeStocksInput({}); // Reset local stock input state
+                                setCurrentCalculatedPricesInput({}); // NEW: Reset local price input state
                             }}
                             className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
@@ -802,7 +832,7 @@ export default function AdminDashboard() {
         name: '',
         category: 'Floral',
         price: 0,
-        pricePer10Ml: 0,
+        // pricePer10Ml: 0, // REMOVED THIS LINE
         calculatedPrices: {},
         sizeStocks: {},
         inStock: true,
@@ -879,18 +909,18 @@ export default function AdminDashboard() {
         });
     };
 
-    const handleAddProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>) => {
+    const handleAddProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>, currentCalculatedPricesInput: Record<string, number>) => { // UPDATED SIGNATURE
         e.preventDefault();
         const categoryLower = newProduct.category.toLowerCase();
         const generatedImageUrl = 'https://readdy.ai/api/search-image?query=luxury%20perfume%20bottle%20' + categoryLower + '%20scent%20premium%20packaging%20elegant%20design%20minimalist%20background%20sophisticated&width=300&height=400&orientation=portrait';
 
         const finalSizes = processSizesInput(newProduct.sizes.join(','));
-        const calculatedPrices = calculatePricesForSizes(newProduct.pricePer10Ml, finalSizes);
+        // const calculatedPrices = calculatePricesForSizes(newProduct.pricePer10Ml, finalSizes); // REMOVED THIS LINE
         const overallInStock = isProductOverallInStock(currentSizeStocksInput);
 
         const sortedSizes = [...finalSizes].sort((a, b) => parseMlFromString(a) - parseMlFromString(b));
-        const smallestSizePrice = sortedSizes.length > 0 && Object.keys(calculatedPrices).length > 0
-            ? calculatedPrices[sortedSizes[0]]
+        const smallestSizePrice = sortedSizes.length > 0 && Object.keys(currentCalculatedPricesInput).length > 0
+            ? currentCalculatedPricesInput[sortedSizes[0]] // Get price from input prices
             : 0;
 
         let images = [...newProduct.images];
@@ -903,8 +933,8 @@ export default function AdminDashboard() {
         const productForm = { // No need for id: `prod-${Date.now()}` here, backend assigns _id
             ...newProduct,
             images: images,
-            price: smallestSizePrice,
-            calculatedPrices: calculatedPrices,
+            price: smallestSizePrice, // Set main price to the smallest size's price
+            calculatedPrices: currentCalculatedPricesInput, // Use directly from input
             sizes: finalSizes,
             sizeStocks: currentSizeStocksInput,
             inStock: overallInStock,
@@ -912,20 +942,26 @@ export default function AdminDashboard() {
         };
 
         // Optional but recommended: check required fields before proceeding
-        if (!productForm.name || !productForm.price) {
-            alert("Please fill in required fields like name and price.");
+        if (!productForm.name || !productForm.price || Object.keys(productForm.calculatedPrices).length === 0) { // Added calculatedPrices check
+            alert("Please fill in required fields like name and prices for sizes.");
             return;
         }
 
         const sanitizedProduct = {
             ...productForm,
             price: Number(productForm.price) || 0,
-            pricePer10Ml: Number(productForm.pricePer10Ml) || 0,
+            // pricePer10Ml: Number(productForm.pricePer10Ml) || 0, // REMOVED THIS LINE
             reviews: Number(productForm.reviews) || 0,
             sizeStocks: Object.fromEntries(
                 Object.entries(productForm.sizeStocks || {}).map(([size, stock]) => [
                     size,
                     Number(stock) || 0,
+                ])
+            ),
+            calculatedPrices: Object.fromEntries( // NEW: Sanitize calculatedPrices
+                Object.entries(productForm.calculatedPrices || {}).map(([size, price]) => [
+                    size,
+                    Number(price) || 0,
                 ])
             ),
         };
@@ -934,7 +970,7 @@ export default function AdminDashboard() {
             const createdProductFromBackend = await createProduct(sanitizedProduct);
             setProducts(prevProducts => [...prevProducts, { ...createdProductFromBackend, id: createdProductFromBackend._id! }]);
             setNewProduct({
-                id: '', name: '', category: 'Floral', price: 0, pricePer10Ml: 0, calculatedPrices: {}, sizeStocks: {},
+                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
                 description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
             });
             setRawSizesInput('');
@@ -961,22 +997,23 @@ export default function AdminDashboard() {
         setNewProduct({
             ...product,
             notes: { top: [...product.notes.top], heart: [...product.notes.heart], base: [...product.notes.base] },
-            sizeStocks: product.sizeStocks && typeof product.sizeStocks === 'object' ? { ...product.sizeStocks } : {}
+            sizeStocks: product.sizeStocks && typeof product.sizeStocks === 'object' ? { ...product.sizeStocks } : {},
+            calculatedPrices: product.calculatedPrices && typeof product.calculatedPrices === 'object' ? { ...product.calculatedPrices } : {} // NEW: Initialize calculatedPrices
         });
         setRawSizesInput(product.sizes.join(', '));
         setShowAddProductModal(true);
     };
 
-    const handleUpdateProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>) => {
+    const handleUpdateProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>, currentCalculatedPricesInput: Record<string, number>) => { // UPDATED SIGNATURE
         e.preventDefault();
         if (editingProduct) {
             const finalSizes = processSizesInput(rawSizesInput);
-            const calculatedPrices = calculatePricesForSizes(editingProduct.pricePer10Ml, finalSizes);
+            // const calculatedPrices = calculatePricesForSizes(editingProduct.pricePer10Ml, finalSizes); // REMOVED THIS LINE
             const overallInStock = isProductOverallInStock(currentSizeStocksInput);
 
             const sortedSizes = [...finalSizes].sort((a, b) => parseMlFromString(a) - parseMlFromString(b));
-            const smallestSizePrice = sortedSizes.length > 0 && Object.keys(calculatedPrices).length > 0
-                ? calculatedPrices[sortedSizes[0]]
+            const smallestSizePrice = sortedSizes.length > 0 && Object.keys(currentCalculatedPricesInput).length > 0
+                ? currentCalculatedPricesInput[sortedSizes[0]]
                 : editingProduct.price;
 
             let images = [...editingProduct.images];
@@ -992,7 +1029,7 @@ export default function AdminDashboard() {
             const updatedProductData: Product = {
                 ...editingProduct,
                 price: smallestSizePrice,
-                calculatedPrices: calculatedPrices,
+                calculatedPrices: currentCalculatedPricesInput, // Use directly from input
                 sizes: finalSizes,
                 images: images,
                 sizeStocks: currentSizeStocksInput,
@@ -1012,7 +1049,7 @@ export default function AdminDashboard() {
                 );
                 setEditingProduct(null);
                 setNewProduct({
-                    id: '', name: '', category: 'Floral', price: 0, pricePer10Ml: 0, calculatedPrices: {}, sizeStocks: {},
+                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
                     description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                 });
                 setRawSizesInput('');
@@ -1038,11 +1075,12 @@ export default function AdminDashboard() {
         }
 
         const targetProductState = isEditing ? (editingProduct as Product) : newProduct;
-        const updatedProductState: Product = { ...targetProductState }; // Change `let` to `const`
+        const updatedProductState: Product = { ...targetProductState };
 
         if (!targetProductState) return;
 
-        if (name === "pricePer10Ml" || name === "reviews") {
+        // REMOVED: if (name === "pricePer10Ml" || name === "reviews") { ... }
+        if (name === "reviews") { // Keep only for reviews
             (updatedProductState as any)[name] = parseFloat(value);
         } else if (name === 'isFeatured') {
             (updatedProductState as any)[name] = checked;
@@ -1796,7 +1834,7 @@ export default function AdminDashboard() {
                                                 setShowAddProductModal(true);
                                                 setEditingProduct(null);
                                                 setNewProduct({
-                                                    id: '', name: '', category: 'Floral', price: 0, pricePer10Ml: 0, calculatedPrices: {}, sizeStocks: {},
+                                                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
                                                     description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                                                 });
                                                 setRawSizesInput('');
@@ -1820,7 +1858,8 @@ export default function AdminDashboard() {
                                         <tr><th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price/10ML</th>
+                                            {/* <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price/10ML</th> */} {/* REMOVED THIS */}
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sizes & Prices</th> {/* ADDED THIS */}
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Stock</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Featured</th>
@@ -1839,7 +1878,12 @@ export default function AdminDashboard() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price.toFixed(2)}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.pricePer10Ml.toFixed(2)}</td>
+                                                {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.pricePer10Ml.toFixed(2)}</td> */} {/* REMOVED THIS */}
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {/* ADDED THIS CELL */}
+                                                    {Object.entries(product.calculatedPrices).map(([size, price]) => (
+                                                        <div key={size}>{size}: ${price.toFixed(2)}</div>
+                                                    ))}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{getTotalStock(product.sizeStocks)}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-md ${
@@ -2526,7 +2570,7 @@ export default function AdminDashboard() {
                                             setShowAddProductModal(false);
                                             setEditingProduct(null);
                                             setNewProduct({
-                                                id: '', name: '', category: 'Floral', price: 0, pricePer10Ml: 0, calculatedPrices: {}, sizeStocks: {},
+                                                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
                                                 description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                                             });
                                             setRawSizesInput('');
