@@ -2443,7 +2443,7 @@ export default function AdminDashboard() {
                                                                 }}
                                                                 title="View Details"
                                                             >
-                                                                <InfoIcon className="w-6 h-6" />
+                                                                <Eye className="w-4 h-4" />
                                                             </button>
                                                             <OrderStatusDropdown
                                                                 currentStatus={order.status}
