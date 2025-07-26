@@ -15,12 +15,8 @@ export async function generateStaticParams() {
   ];
 }
 
-// Derive the type of a single parameter object from generateStaticParams's return type
-// This precisely matches the structure { id: string } that params will have at runtime.
-type ProductIdParam = Awaited<ReturnType<typeof generateStaticParams>>[number];
-
 interface ProductPageProps {
-  params: ProductIdParam; // Use the derived type for params
+  params: { id: string }; // Use a plain object type for params
   // Include searchParams for full PageProps compatibility, even if not directly used
   searchParams?: { [key: string]: string | string[] | undefined };
 }
