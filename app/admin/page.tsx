@@ -1007,7 +1007,7 @@ export default function AdminDashboard() {
     const handleUpdateProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>, currentCalculatedPricesInput: Record<string, number>) => { // UPDATED SIGNATURE
         e.preventDefault();
         if (editingProduct) {
-            const finalSizes = processSizesInput(rawSizesInput);
+            const finalSizes = processSizesInput(rawSizesInput); // Recalculate sizes based on latest raw input
             // const calculatedPrices = calculatePricesForSizes(editingProduct.pricePer10Ml, finalSizes); // REMOVED THIS LINE
             const overallInStock = isProductOverallInStock(currentSizeStocksInput);
 
@@ -1030,7 +1030,7 @@ export default function AdminDashboard() {
                 ...editingProduct,
                 price: smallestSizePrice,
                 calculatedPrices: currentCalculatedPricesInput, // Use directly from input
-                sizes: finalSizes,
+                sizes: finalSizes, // Make sure to use the newly processed sizes
                 images: images,
                 sizeStocks: currentSizeStocksInput,
                 inStock: overallInStock,
@@ -1062,45 +1062,40 @@ export default function AdminDashboard() {
         }
     };
 
-
     const handleFormChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
         isEditing: boolean
     ) => {
         const { name, value, type, checked } = e.target as HTMLInputElement;
 
+        // Create a mutable copy of the product state
+        const targetProductState = isEditing ? { ...(editingProduct as Product) } : { ...newProduct };
+
         if (name === 'sizes') {
             setRawSizesInput(value);
-            return;
-        }
-
-        const targetProductState = isEditing ? (editingProduct as Product) : newProduct;
-        const updatedProductState: Product = { ...targetProductState };
-
-        if (!targetProductState) return;
-
-        // REMOVED: if (name === "pricePer10Ml" || name === "reviews") { ... }
-        if (name === "reviews") { // Keep only for reviews
-            (updatedProductState as any)[name] = parseFloat(value);
+            // Directly update the `sizes` array in the product state
+            const newSizesArray = processSizesInput(value);
+            targetProductState.sizes = newSizesArray;
+        } else if (name === "reviews") {
+            (targetProductState as any)[name] = parseFloat(value);
         } else if (name === 'isFeatured') {
-            (updatedProductState as any)[name] = checked;
-        }
-        else if (type === 'checkbox' || type === 'radio') {
+            (targetProductState as any)[name] = checked;
         } else if (name.startsWith('notes')) {
             const noteType = name.replace('notes', '').toLowerCase() as 'top' | 'heart' | 'base';
             const parsedNotes = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-            updatedProductState.notes = { ...updatedProductState.notes, [noteType]: parsedNotes };
+            targetProductState.notes = { ...targetProductState.notes, [noteType]: parsedNotes };
         } else if (name === 'images') {
             const parsedImages = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-            updatedProductState.images = parsedImages;
+            targetProductState.images = parsedImages;
         } else {
-            (updatedProductState as any)[name] = value;
+            (targetProductState as any)[name] = value;
         }
 
+        // Update the respective state (newProduct or editingProduct)
         if (isEditing) {
-            setEditingProduct(updatedProductState);
+            setEditingProduct(targetProductState);
         } else {
-            setNewProduct(updatedProductState);
+            setNewProduct(targetProductState);
         }
     };
 
@@ -2647,7 +2642,7 @@ export default function AdminDashboard() {
                                     >
                                         <span className="font-semibold">Sign In</span>
                                     </button>
-                                </form>
+                                                </form>
                                 <p className="text-center text-sm text-gray-600">
                                     Demo credentials: admin / admin123
                                 </p>
