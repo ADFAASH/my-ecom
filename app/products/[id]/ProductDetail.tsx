@@ -10,11 +10,10 @@ interface ProductDetailProps {
 
 // Define the Product interface to match the updated structure from admin/page.tsx
 interface Product {
-  id: string;
+  id: string; // Main display price, often for the smallest size or a default (now directly from calculatedPrices)
   name: string;
   category: string;
-  price: number; // Main display price, often for the smallest size or a default (now directly from calculatedPrices)
-  // pricePer10Ml: number; // REMOVED THIS LINE
+  price: number;
   calculatedPrices: Record<string, number>; // Prices for all sizes
   image: string; // Main image URL for thumbnail/list view
   sizeStocks: Record<string, number>; // NEW: Stock per individual size (e.g., {'30ml': 100, '50ml': 50})
@@ -28,6 +27,8 @@ interface Product {
   reviews: number;
   sizes: string[]; // Array of available size labels (e.g., ['30ml', '50ml'])
   images: string[];
+  // Include _id to explicitly acknowledge MongoDB's ID
+  _id?: string;
 }
 
 // Helper function to parse ML from size string (e.g., "50ml" -> 50)
@@ -35,18 +36,6 @@ const parseMlFromString = (sizeString: string): number => {
     const match = sizeString.match(/(\d+)\s*ml/i);
     return match ? parseFloat(match[1]) : 0;
 };
-
-// REMOVED: calculateOriginalPricesForSizes function is no longer relevant
-// const calculateOriginalPricesForSizes = (pricePer10Ml: number, sizes: string[]): Record<string, number> => {
-//   const prices: Record<string, number} = {};
-//   sizes.forEach(sizeStr => {
-//     const ml = parseMlFromString(sizeStr);
-//     if (ml > 0 && pricePer10Ml > 0) {
-//       prices[sizeStr] = parseFloat(((ml / 10) * pricePer10Ml).toFixed(2));
-//     }
-//   });
-//   return prices;
-// };
 
 // Helper to determine if a product (overall) is in stock based on its sizeStocks
 const isProductOverallInStock = (sizeStocks: Record<string, number>): boolean => {
@@ -60,7 +49,6 @@ const defaultProductDetails: { [key: string]: Product } = {
     name: 'Midnight Rose',
     category: 'Floral',
     price: 89.99, // Changed to match your image for Midnight Rose
-    // pricePer10Ml: 18.5, // REMOVED THIS LINE
     calculatedPrices: {'30ml': 55.5, '50ml': 92.5, '100ml': 185},
     sizeStocks: {'30ml': 20, '50ml': 45, '100ml': 15}, // Example stock per size
     reviews: 124,
@@ -83,16 +71,15 @@ const defaultProductDetails: { [key: string]: Product } = {
     name: 'Ocean Breeze',
     category: 'Fresh',
     price: 82.50, // Price from your image for Ocean Breeze
-    // pricePer10Ml: 16.5, // REMOVED THIS LINE
     calculatedPrices: {'30ml': 49.5, '50ml': 82.5, '100ml': 165},
     sizeStocks: {'30ml': 5, '50ml': 8, '100ml': 2}, // Example stock per size, Ocean Breeze stock 8 in 50ml size
     reviews: 89,
     sizes: ['30ml', '50ml', '100ml'],
     images: [
-      'https://readdy.ai/api/search-image?query=luxury%20perfume%20bottle%20with%20ocean%20blue%20essence%2C%20crystal%20clear%20glass%20design%2C%20premium%20cosmetic%20photography%2C%20fresh%20aquatic%20theme%2C%20minimalist%20white%20background%2C%20sophisticated%20fragrance%20presentation&width=250&height=320&seq=2&orientation=portrait',
-      'https://readdy.ai/api/search-image?query=luxury%20perfume%20bottle%20with%20water%20droplets%2C%20crystal%20clear%20glass%20design%2C%20premium%20cosmetic%20photography%2C%20fresh%20aquatic%20theme%2C%20minimalist%20white%20background%2C%20sophisticated%20fragrance%20presentation&width=600&height=800&seq=2b&orientation=portrait'
+      'https://readdy.ai/api/search-image?query=luxury%20perfume%20bottle%20with%20ocean%20blue%20essence%2C%20crystal%20clear%20glass%2C%20design%2C%20premium%20cosmetic%20photography%2C%20fresh%20aquatic%20theme%2C%20minimalist%20white%20background%2C%20sophisticated%20fragrance%20presentation&width=250&height=320&seq=2&orientation=portrait',
+      'https://readdy.ai/api/search-image?query=luxury%20perfume%20bottle%20with%20water%20droplets%2C%20crystal%20clear%20glass%2C%20design%2C%20premium%20cosmetic%20photography%2C%20fresh%20aquatic%20theme%2C%20minimalist%20white%20background%2C%20sophisticated%20fragrance%20presentation&width=600&height=800&seq=2b&orientation=portrait'
     ],
-    image: 'https://readdy.ai/api/search-image?query=luxury%20perfume%20bottle%20with%20ocean%20blue%20essence%2C%20crystal%20clear%20glass%20design%2C%20premium%20cosmetic%20photography%2C%20fresh%20aquatic%20theme%2C%20minimalist%20white%20background%2C%20sophisticated%20fragrance%20presentation&width=250&height=320&seq=2&orientation=portrait',
+    image: 'https://readdy.ai/api/search-image?query=luxury%20perfume%20bottle%20with%20ocean%20blue%20essence%2C%20crystal%20clear%20glass%2C%20design%2C%20premium%20cosmetic%20photography%2C%20fresh%20aquatic%20theme%2C%20minimalist%20white%20background%2C%20sophisticated%20fragrance%20presentation&width=250&height=320&seq=2&orientation=portrait',
     description: 'Fresh marine notes with hints of sea salt and citrus that transport you to pristine coastal waters. This invigorating fragrance combines aquatic accords with zesty citrus and clean marine notes for an instantly refreshing experience.',
     notes: {
       top: ['Sea Salt', 'Lemon', 'Grapefruit'],
@@ -121,15 +108,25 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products/${productId}`);
         if (!res.ok) throw new Error('Failed to fetch product');
-        const data = await res.json();
-        setProduct(data);
+        const data = await res.json(); // 'data' object coming from backend will have '_id'
 
-        // Choose initial size
-        const initialSize = data.sizes.includes('50ml') ? '50ml' : (data.sizes[0] || '');
+        // --- START FIX ---
+        // Map backend's _id to frontend's id for consistency
+        const sanitizedProduct: Product = {
+          ...data,
+          id: data._id, // Assign _id to the 'id' property expected by the frontend interface
+          // Ensure inStock is explicitly boolean, useful for data consistency
+          inStock: typeof data.inStock === 'boolean' ? data.inStock : true,
+        };
+        setProduct(sanitizedProduct); // Set the sanitized product state
+        // --- END FIX ---
+
+        // Choose initial size (use sanitizedProduct to ensure ID is available)
+        const initialSize = sanitizedProduct.sizes.includes('50ml') ? '50ml' : (sanitizedProduct.sizes[0] || '');
         setSelectedSize(initialSize);
 
-        // Cap initial quantity at available stock
-        const initialStock = data.sizeStocks?.[initialSize] || 0;
+        // Cap initial quantity at available stock (use sanitizedProduct)
+        const initialStock = sanitizedProduct.sizeStocks?.[initialSize] || 0;
         setQuantity(initialStock > 0 ? 1 : 0);
       } catch (error) {
         console.error('Error loading product:', error);
@@ -140,7 +137,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
     fetchProduct();
     setSelectedImageIndex(0);
     setSubscribedForNotification(false);
-  }, [productId]);
+  }, [productId]); // Ensure productId is in dependency array
 
   // Determine current stock based on selected size
   const currentStockForSelectedSize = product && selectedSize ? (product.sizeStocks[selectedSize] || 0) : 0;
@@ -188,30 +185,38 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
     }
   ];
 
-  const handleAddToCart = () => {
-    // Ensure product and selectedSize are valid before adding to cart
-    if (!product || !selectedSize || currentStockForSelectedSize <= 0) {
-        // Optionally show an alert or message if trying to add out of stock
-        alert('Product is out of stock for the selected size.');
-        return;
-    }
+const handleAddToCart = () => {
+  // DEBUG LOGS (KEEP THESE FOR TESTING, REMOVE LATER)
+  console.log('DEBUG: product state is:', product);
+  console.log('DEBUG: product.id for cart:', product?.id);
+  console.log('DEBUG: selectedSize for cart:', selectedSize);
+  console.log('DEBUG: Constructed cart item ID (before correction):', `${product?.id}-${selectedSize}`); // This will still show the concatenated string, which is fine for logging where it originated from.
 
-    // Cap the quantity at available stock for the selected size
-    const quantityToAdd = Math.min(quantity, currentStockForSelectedSize);
+  // Ensure product and selectedSize are valid before adding to cart
+  if (!product || !selectedSize || currentStockForSelectedSize <= 0) {
+      alert('Product is out of stock for the selected size.');
+      return;
+  }
 
-    addToCart({
-      id: `${product.id}-${selectedSize}`,
-      name: `${product.name} (${selectedSize})`,
-      price: pricePerUnit,
-      image: (product.images && product.images.length > 0) ? product.images[0] : product.image,
-      size: selectedSize,
-      quantity: quantityToAdd,
-      inStock: product.inStock, // This is overall product inStock, cart handles per-item stock
-      stock: currentStockForSelectedSize // Pass the available stock for this specific size
-    });
-    setShowAddedMessage(true);
-    setTimeout(() => setShowAddedMessage(false), 3000);
-  };
+  const quantityToAdd = Math.min(quantity, currentStockForSelectedSize);
+
+  addToCart({
+    // --- FIX START ---
+    // Send ONLY the product's MongoDB _id as 'id'
+    // The 'size' is already a separate property in the CartItem interface
+    id: product.id, // This now correctly holds the MongoDB _id
+    // --- FIX END ---
+    name: `${product.name} (${selectedSize})`, // Keep the name descriptive for cart display
+    price: pricePerUnit,
+    image: (product.images && product.images.length > 0) ? product.images[0] : product.image,
+    size: selectedSize, // This is already correctly passed as a separate property
+    quantity: quantityToAdd,
+    inStock: product.inStock,
+    stock: currentStockForSelectedSize
+  });
+  setShowAddedMessage(true);
+  setTimeout(() => setShowAddedMessage(false), 3000);
+};
 
   const handleNotifyMe = (e: React.FormEvent) => {
     e.preventDefault();
