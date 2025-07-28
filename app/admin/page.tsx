@@ -2078,7 +2078,7 @@ export default function AdminDashboard() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end space-x-2">
                                                         <button className="text-blue-600 hover:text-blue-900">
-                                                            <Eye className="w-4 h-4" />
+                                                            <Eye className="w-6 h-6" />
                                                         </button>
                                                         <button className="text-indigo-600 hover:text-indigo-900">
                                                             <Edit className="w-4 h-4" />
@@ -2482,7 +2482,7 @@ export default function AdminDashboard() {
                                                                 }}
                                                                 title="View Details"
                                                             >
-                                                                <Eye className="w-4 h-4" />
+                                                                <Eye className="w-5 h-8" />
                                                             </button>
                                                             <OrderStatusDropdown
                                                                 currentStatus={order.status}
