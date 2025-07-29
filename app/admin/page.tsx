@@ -38,7 +38,9 @@ import {
     Calendar,
     Truck,
     CheckCircle2,
-    XCircle
+    XCircle,
+    Menu, // Import Menu icon for mobile toggle
+    ChevronLeft // Import ChevronLeft for closing sidebar
 } from 'lucide-react';
 
 import emailjs from 'emailjs-com';
@@ -98,7 +100,6 @@ interface Product {
     name: string;
     category: string;
     price: number; // This will now be the price of the smallest size
-    // pricePer10Ml: number; // REMOVED THIS LINE
     calculatedPrices: Record<string, number>; // Prices for all sizes, directly input
     sizeStocks: Record<string, number>;
     inStock: boolean;
@@ -143,7 +144,6 @@ interface Order {
     _id?: string;
 }
 
-// REMOVED: parseMlFromString and calculatePricesForSizes functions are no longer needed for admin input.
 const parseMlFromString = (sizeString: string): number => {
     const match = sizeString.match(/(\d+)\s*ml/i);
     return match ? parseFloat(match[1]) : 0;
@@ -163,7 +163,6 @@ const defaultProducts: Product[] = [
         name: 'Midnight Rose',
         category: 'Floral',
         price: 92.5,
-        // pricePer10Ml: 18.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 55.5, '50ml': 92.5, '100ml': 185 },
         sizeStocks: { '30ml': 20, '50ml': 45, '100ml': 15 },
         reviews: 124,
@@ -187,7 +186,6 @@ const defaultProducts: Product[] = [
         name: 'Ocean Breeze',
         category: 'Fresh',
         price: 82.5,
-        // pricePer10Ml: 16.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 49.5, '50ml': 82.5, '100ml': 165 },
         sizeStocks: { '30ml': 5, '50ml': 8, '100ml': 2 },
         reviews: 89,
@@ -211,7 +209,6 @@ const defaultProducts: Product[] = [
         name: 'Golden Amber',
         category: 'Oriental',
         price: 97.5,
-        // pricePer10Ml: 19.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 58.5, '50ml': 97.5, '100ml': 195 },
         sizeStocks: { '30ml': 0, '50ml': 0, '100ml': 0 },
         reviews: 156,
@@ -235,7 +232,6 @@ const defaultProducts: Product[] = [
         name: 'Silk Garden',
         category: 'Floral',
         price: 87.5,
-        // pricePer10Ml: 17.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 52.5, '50ml': 87.5, '100ml': 175 },
         sizeStocks: { '30ml': 100, '50ml': 120, '100ml': 80 },
         reviews: 203,
@@ -259,7 +255,6 @@ const defaultProducts: Product[] = [
         name: 'Urban Noir',
         category: 'Oriental',
         price: 105,
-        // pricePer10Ml: 21.0, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 63, '50ml': 105, '100ml': 210 },
         sizeStocks: { '30ml': 10, '50ml': 15, '100ml': 5 },
         reviews: 95,
@@ -283,7 +278,6 @@ const defaultProducts: Product[] = [
         name: 'Citrus Dawn',
         category: 'Fresh',
         price: 77.5,
-        // pricePer10Ml: 15.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 10, '50ml': 10, '100ml': 10 },
         sizeStocks: { '30ml': 10, '50ml': 10, '100ml': 10 },
         reviews: 78,
@@ -307,7 +301,6 @@ const defaultProducts: Product[] = [
         name: 'Velvet Orchid',
         category: 'Floral',
         price: 112.5,
-        // pricePer10Ml: 22.5, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 67.5, '50ml': 112.5, '100ml': 225 },
         sizeStocks: { '30ml': 50, '50ml': 75, '100ml': 25 },
         reviews: 167,
@@ -331,7 +324,6 @@ const defaultProducts: Product[] = [
         name: 'Mystic Woods',
         category: 'Oriental',
         price: 95,
-        // pricePer10Ml: 19.0, // REMOVED THIS LINE
         calculatedPrices: { '30ml': 57, '50ml': 95, '100ml': 190 },
         sizeStocks: { '30ml': 5, '50ml': 12, '100ml': 3 },
         reviews: 134,
@@ -352,10 +344,6 @@ const defaultProducts: Product[] = [
     }
 ];
 
-// -----------------------------------------------------
-// EXTRACTED ADDPRODUCTMODAL COMPONENT
-// This component should be defined OUTSIDE of the AdminDashboard function
-// -----------------------------------------------------
 const AddProductModal = ({
     newProduct,
     setNewProduct,
@@ -372,38 +360,33 @@ const AddProductModal = ({
     setNewProduct: React.Dispatch<React.SetStateAction<Product>>;
     rawSizesInput: string;
     setRawSizesInput: React.Dispatch<React.SetStateAction<string>>;
-    handleAddProduct: (e: React.FormEvent, sizeStocksData: Record<string, number>, calculatedPricesData: Record<string, number>) => void; // UPDATED SIGNATURE
-    handleUpdateProduct: (e: React.FormEvent, sizeStocksData: Record<string, number>, calculatedPricesData: Record<string, number>) => void; // UPDATED SIGNATURE
+    handleAddProduct: (e: React.FormEvent, sizeStocksData: Record<string, number>, calculatedPricesData: Record<string, number>) => void;
+    handleUpdateProduct: (e: React.FormEvent, sizeStocksData: Record<string, number>, calculatedPricesData: Record<string, number>) => void;
     handleFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, isEditing: boolean) => void;
     editingProduct: Product | null;
     setEditingProduct: React.Dispatch<React.SetStateAction<Product | null>>;
     setShowAddProductModal: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-    // Local state to manage individual stock inputs
     const [currentSizeStocksInput, setCurrentSizeStocksInput] = useState<Record<string, number>>({});
-    // NEW: Local state to manage individual price inputs
     const [currentCalculatedPricesInput, setCurrentCalculatedPricesInput] = useState<Record<string, number>>({});
 
-    // Parse rawSizesInput to get a list of current sizes for dynamic inputs
     const currentSizes = rawSizesInput.split(',').map(s => s.trim()).filter(s => s.length > 0);
 
-    // Effect to initialize currentSizeStocksInput and currentCalculatedPricesInput
     useEffect(() => {
         const initialStocks: Record<string, number> = {};
         const sourceStocks = editingProduct?.sizeStocks || {};
 
-        const initialPrices: Record<string, number> = {}; // NEW
-        const sourcePrices = editingProduct?.calculatedPrices || {}; // NEW
+        const initialPrices: Record<string, number> = {};
+        const sourcePrices = editingProduct?.calculatedPrices || {};
 
         currentSizes.forEach(size => {
             initialStocks[size] = sourceStocks[size] || 0;
-            initialPrices[size] = sourcePrices[size] || 0; // NEW
+            initialPrices[size] = sourcePrices[size] || 0;
         });
         setCurrentSizeStocksInput(initialStocks);
-        setCurrentCalculatedPricesInput(initialPrices); // NEW
+        setCurrentCalculatedPricesInput(initialPrices);
     }, [editingProduct, rawSizesInput]);
 
-    // Handle change for individual stock input fields
     const handleIndividualStockChange = useCallback((size: string, value: string) => {
         const stockValue = parseInt(value);
         setCurrentSizeStocksInput(prevStocks => ({
@@ -412,28 +395,26 @@ const AddProductModal = ({
         }));
     }, []);
 
-    // NEW: Handle change for individual price input fields
     const handleIndividualPriceChange = useCallback((size: string, value: string) => {
         const priceValue = parseFloat(value);
         setCurrentCalculatedPricesInput(prevPrices => ({
             ...prevPrices,
-            [size]: isNaN(priceValue) ? 0 : Math.max(0, priceValue) // Ensure non-negative number
+            [size]: isNaN(priceValue) ? 0 : Math.max(0, priceValue)
         }));
     }, []);
 
-    // Wrapper function to pass local states to parent's submit handlers
     const handleActualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingProduct) {
-            handleUpdateProduct(e, currentSizeStocksInput, currentCalculatedPricesInput); // UPDATED CALL
+            handleUpdateProduct(e, currentSizeStocksInput, currentCalculatedPricesInput);
         } else {
-            handleAddProduct(e, currentSizeStocksInput, currentCalculatedPricesInput); // UPDATED CALL
+            handleAddProduct(e, currentSizeStocksInput, currentCalculatedPricesInput);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"> {/* Added p-4 for mobile padding */}
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto"> {/* Changed mx-4 to mx-auto */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900">{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
@@ -444,12 +425,12 @@ const AddProductModal = ({
                             setShowAddProductModal(false);
                             setEditingProduct(null);
                             setNewProduct({
-                                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
+                                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {},
                                 description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                             });
                             setRawSizesInput('');
-                            setCurrentSizeStocksInput({}); // Reset local stock input state
-                            setCurrentCalculatedPricesInput({}); // NEW: Reset local price input state
+                            setCurrentSizeStocksInput({});
+                            setCurrentCalculatedPricesInput({});
                         }}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
@@ -474,35 +455,16 @@ const AddProductModal = ({
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                             <div className="relative">
-                                <button
-                                    type="button"
-                                    className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md px-3 py-2 border bg-white text-left pr-8 focus:ring-indigo-500 focus:border-indigo-500"
-                                    onClick={(e) => {
-                                        const select = e.currentTarget.nextElementSibling as HTMLElement;
-                                        select.classList.toggle('hidden');
-                                    }}
+                                <select
+                                    name="category"
+                                    value={editingProduct ? editingProduct.category : newProduct.category}
+                                    onChange={(e) => handleFormChange(e, !!editingProduct)}
+                                    className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md px-3 py-2 border bg-white pr-8 focus:ring-indigo-500 focus:border-indigo-500"
                                 >
-                                    {editingProduct ? editingProduct.category : newProduct.category}
-                                    <i className="ri-arrow-down-s-line absolute right-2 top-1/2 transform -translate-y-1/2"></i>
-                                </button>
-                                <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg hidden">
                                     {['Floral', 'Fresh', 'Oriental', 'Gourmand', 'Woody'].map((category) => (
-                                        <button
-                                            key={category}
-                                            type="button"
-                                            className="block w-full text-left px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                                            onClick={(e) => {
-                                                const targetState = editingProduct ? editingProduct : newProduct;
-                                                const setStateFn = editingProduct ? setEditingProduct : setNewProduct;
-                                                setStateFn({ ...targetState, category: category });
-                                                const dropdown = e.currentTarget.closest('.absolute.z-10') as HTMLElement;
-                                                dropdown.classList.add('hidden');
-                                            }}
-                                        >
-                                            {category}
-                                        </button>
+                                        <option key={category} value={category}>{category}</option>
                                     ))}
-                                </div>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -520,19 +482,6 @@ const AddProductModal = ({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* REMOVED: Price Per 10ML Input */}
-                        {/* <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Price Per 10ML ($)</label>
-                            <input
-                                type="number"
-                                name="pricePer10Ml"
-                                value={editingProduct ? editingProduct.pricePer10Ml : newProduct.pricePer10Ml}
-                                onChange={(e) => handleFormChange(e, !!editingProduct)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="0.00"
-                                required
-                            />
-                        </div> */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Sizes (comma-separated, e.g., 30ml, 50ml, 100ml)</label>
                             <input
@@ -546,7 +495,6 @@ const AddProductModal = ({
                         </div>
                     </div>
 
-                    {/* DYNAMIC STOCK INPUTS */}
                     {currentSizes.length > 0 && (
                         <div className="space-y-4 border p-4 rounded-lg bg-gray-50">
                             <h3 className="text-lg font-semibold text-gray-800">Stock per Size</h3>
@@ -570,7 +518,6 @@ const AddProductModal = ({
                         </div>
                     )}
 
-                    {/* NEW: DYNAMIC PRICE INPUTS */}
                     {currentSizes.length > 0 && (
                         <div className="space-y-4 border p-4 rounded-lg bg-gray-50">
                             <h3 className="text-lg font-semibold text-gray-800">Price per Size ($)</h3>
@@ -581,7 +528,7 @@ const AddProductModal = ({
                                         <input
                                             type="number"
                                             min="0"
-                                            step="0.01" // Allow decimal for prices
+                                            step="0.01"
                                             value={currentCalculatedPricesInput[size] || 0}
                                             onChange={(e) => handleIndividualPriceChange(size, e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -663,25 +610,25 @@ const AddProductModal = ({
                         <label htmlFor="featured" className="ml-2 text-sm text-gray-700">Mark as Featured Product</label>
                     </div>
 
-                    <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
+                    <div className="flex flex-col sm:flex-row items-center justify-end space-y-3 sm:space-y-0 sm:space-x-3 p-6 border-t border-gray-200 bg-gray-50"> {/* Adjusted for mobile stacking */}
                         <button
                             type="button"
                             onClick={() => {
                                 setShowAddProductModal(false);
                                 setEditingProduct(null);
                                 setNewProduct({
-                                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
+                                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {},
                                     description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                                 });
                                 setRawSizesInput('');
-                                setCurrentSizeStocksInput({}); // Reset local stock input state
-                                setCurrentCalculatedPricesInput({}); // NEW: Reset local price input state
+                                setCurrentSizeStocksInput({});
+                                setCurrentCalculatedPricesInput({});
                             }}
-                            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="w-full sm:w-auto px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             Cancel
                         </button>
-                        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <button type="submit" className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             {editingProduct ? 'Update Product' : 'Add Product'}
                         </button>
                     </div>
@@ -690,9 +637,7 @@ const AddProductModal = ({
         </div>
     );
 };
-// -----------------------------------------------------
 
-// NEW RestockModal component
 const RestockModal = ({
     product,
     restockAmount,
@@ -722,8 +667,8 @@ const RestockModal = ({
     const currentStockForSelectedSize = product.sizeStocks[selectedRestockSize] || 0;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"> {/* Added p-4 for mobile padding */}
+            <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-auto"> {/* Changed mx-4 to mx-auto */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900">Restock {product.name}</h2>
@@ -757,7 +702,7 @@ const RestockModal = ({
                             min="1"
                             step="1"
                             value={restockAmount}
-                            onChange={(e) => setRestockAmount(Math.max(1, parseInt(e.target.value) || 0))} // Ensure positive integer
+                            onChange={(e) => setRestockAmount(Math.max(1, parseInt(e.target.value) || 0))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="e.g., 50"
                             required
@@ -765,18 +710,18 @@ const RestockModal = ({
                     </div>
                 </div>
 
-                <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
+                <div className="flex flex-col sm:flex-row items-center justify-end space-y-3 sm:space-y-0 sm:space-x-3 p-6 border-t border-gray-200 bg-gray-50"> {/* Adjusted for mobile stacking */}
                     <button
                         type="button"
                         onClick={() => setShowRestockModal(false)}
-                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         type="button"
                         onClick={() => handleConfirmRestock(product.id, selectedRestockSize, restockAmount)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         Confirm Restock
                     </button>
@@ -786,7 +731,6 @@ const RestockModal = ({
     );
 };
 
-// Place this at the top-level, after imports and before the AdminDashboard function
 const sampleUsers = [
     {
         name: 'John Doe',
@@ -826,13 +770,11 @@ export default function AdminDashboard() {
     const [restockAmount, setRestockAmount] = useState<number>(1);
     const [selectedRestockSize, setSelectedRestockSize] = useState<string>('');
 
-    // Restore newProduct and setNewProduct state
     const [newProduct, setNewProduct] = useState<Product>({
         id: '',
         name: '',
         category: 'Floral',
         price: 0,
-        // pricePer10Ml: 0, // REMOVED THIS LINE
         calculatedPrices: {},
         sizeStocks: {},
         inStock: true,
@@ -846,23 +788,24 @@ export default function AdminDashboard() {
         sizes: ['50ml', '100ml'],
         images: [],
         isFeatured: false,
-        isVisibleInCollection: true // Initialize as visible
+        isVisibleInCollection: true
     });
 
     const [orderSearch, setOrderSearch] = useState('');
     const [orderStatusFilter, setOrderStatusFilter] = useState<'All' | 'pending' | 'confirmed' | 'cancelled'>('All');
 
-    // 1. Add state for order details modal
     const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+    // State for mobile sidebar visibility
+    const [showSidebar, setShowSidebar] = useState(false);
 
     useEffect(() => {
         getProducts()
           .then(fetchedProducts => {
-            // Map MongoDB's _id to frontend's id for consistency
             const sanitizedProducts = fetchedProducts.map((p: any) => ({
                 ...p,
-                id: p._id // Ensure using MongoDB's _id as the primary ID on frontend
+                id: p._id
             }));
             setProducts(sanitizedProducts);
           })
@@ -871,7 +814,6 @@ export default function AdminDashboard() {
             setProducts([]);
           });
 
-        // Fetch orders on mount
         getOrders()
           .then(fetchedOrders => {
             const sanitizedOrders = fetchedOrders.map((o: any) => ({
@@ -887,13 +829,11 @@ export default function AdminDashboard() {
 
     }, []);
 
-    // NOTE: Removed localStorage.setItem for products and orders as they are now managed via API
-
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         if (credentials.username === 'admin' && credentials.password === 'admin123') {
             setIsAuthenticated(true);
-            setCurrentView('dashboard'); // Redirect to dashboard on successful login
+            setCurrentView('dashboard');
         } else {
             alert('Invalid credentials');
         }
@@ -909,18 +849,17 @@ export default function AdminDashboard() {
         });
     };
 
-    const handleAddProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>, currentCalculatedPricesInput: Record<string, number>) => { // UPDATED SIGNATURE
+    const handleAddProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>, currentCalculatedPricesInput: Record<string, number>) => {
         e.preventDefault();
         const categoryLower = newProduct.category.toLowerCase();
         const generatedImageUrl = 'https://readdy.ai/api/search-image?query=luxury%20perfume%20bottle%20' + categoryLower + '%20scent%20premium%20packaging%20elegant%20design%20minimalist%20background%20sophisticated&width=300&height=400&orientation=portrait';
 
         const finalSizes = processSizesInput(newProduct.sizes.join(','));
-        // const calculatedPrices = calculatePricesForSizes(newProduct.pricePer10Ml, finalSizes); // REMOVED THIS LINE
         const overallInStock = isProductOverallInStock(currentSizeStocksInput);
 
         const sortedSizes = [...finalSizes].sort((a, b) => parseMlFromString(a) - parseMlFromString(b));
         const smallestSizePrice = sortedSizes.length > 0 && Object.keys(currentCalculatedPricesInput).length > 0
-            ? currentCalculatedPricesInput[sortedSizes[0]] // Get price from input prices
+            ? currentCalculatedPricesInput[sortedSizes[0]]
             : 0;
 
         let images = [...newProduct.images];
@@ -930,19 +869,18 @@ export default function AdminDashboard() {
             images.shift();
         }
 
-        const productForm = { // No need for id: `prod-${Date.now()}` here, backend assigns _id
+        const productForm = {
             ...newProduct,
             images: images,
-            price: smallestSizePrice, // Set main price to the smallest size's price
-            calculatedPrices: currentCalculatedPricesInput, // Use directly from input
+            price: smallestSizePrice,
+            calculatedPrices: currentCalculatedPricesInput,
             sizes: finalSizes,
             sizeStocks: currentSizeStocksInput,
             inStock: overallInStock,
-            isVisibleInCollection: true // New products are visible by default
+            isVisibleInCollection: true
         };
 
-        // Optional but recommended: check required fields before proceeding
-        if (!productForm.name || !productForm.price || Object.keys(productForm.calculatedPrices).length === 0) { // Added calculatedPrices check
+        if (!productForm.name || !productForm.price || Object.keys(productForm.calculatedPrices).length === 0) {
             alert("Please fill in required fields like name and prices for sizes.");
             return;
         }
@@ -950,7 +888,6 @@ export default function AdminDashboard() {
         const sanitizedProduct = {
             ...productForm,
             price: Number(productForm.price) || 0,
-            // pricePer10Ml: Number(productForm.pricePer10Ml) || 0, // REMOVED THIS LINE
             reviews: Number(productForm.reviews) || 0,
             sizeStocks: Object.fromEntries(
                 Object.entries(productForm.sizeStocks || {}).map(([size, stock]) => [
@@ -958,7 +895,7 @@ export default function AdminDashboard() {
                     Number(stock) || 0,
                 ])
             ),
-            calculatedPrices: Object.fromEntries( // NEW: Sanitize calculatedPrices
+            calculatedPrices: Object.fromEntries(
                 Object.entries(productForm.calculatedPrices || {}).map(([size, price]) => [
                     size,
                     Number(price) || 0,
@@ -970,7 +907,7 @@ export default function AdminDashboard() {
             const createdProductFromBackend = await createProduct(sanitizedProduct);
             setProducts(prevProducts => [...prevProducts, { ...createdProductFromBackend, id: createdProductFromBackend._id! }]);
             setNewProduct({
-                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
+                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {},
                 description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
             });
             setRawSizesInput('');
@@ -998,17 +935,16 @@ export default function AdminDashboard() {
             ...product,
             notes: { top: [...product.notes.top], heart: [...product.notes.heart], base: [...product.notes.base] },
             sizeStocks: product.sizeStocks && typeof product.sizeStocks === 'object' ? { ...product.sizeStocks } : {},
-            calculatedPrices: product.calculatedPrices && typeof product.calculatedPrices === 'object' ? { ...product.calculatedPrices } : {} // NEW: Initialize calculatedPrices
+            calculatedPrices: product.calculatedPrices && typeof product.calculatedPrices === 'object' ? { ...product.calculatedPrices } : {}
         });
         setRawSizesInput(product.sizes.join(', '));
         setShowAddProductModal(true);
     };
 
-    const handleUpdateProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>, currentCalculatedPricesInput: Record<string, number>) => { // UPDATED SIGNATURE
+    const handleUpdateProduct = async (e: React.FormEvent, currentSizeStocksInput: Record<string, number>, currentCalculatedPricesInput: Record<string, number>) => {
         e.preventDefault();
         if (editingProduct) {
-            const finalSizes = processSizesInput(rawSizesInput); // Recalculate sizes based on latest raw input
-            // const calculatedPrices = calculatePricesForSizes(editingProduct.pricePer10Ml, finalSizes); // REMOVED THIS LINE
+            const finalSizes = processSizesInput(rawSizesInput);
             const overallInStock = isProductOverallInStock(currentSizeStocksInput);
 
             const sortedSizes = [...finalSizes].sort((a, b) => parseMlFromString(a) - parseMlFromString(b));
@@ -1029,8 +965,8 @@ export default function AdminDashboard() {
             const updatedProductData: Product = {
                 ...editingProduct,
                 price: smallestSizePrice,
-                calculatedPrices: currentCalculatedPricesInput, // Use directly from input
-                sizes: finalSizes, // Make sure to use the newly processed sizes
+                calculatedPrices: currentCalculatedPricesInput,
+                sizes: finalSizes,
                 images: images,
                 sizeStocks: currentSizeStocksInput,
                 inStock: overallInStock,
@@ -1049,7 +985,7 @@ export default function AdminDashboard() {
                 );
                 setEditingProduct(null);
                 setNewProduct({
-                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
+                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {},
                     description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                 });
                 setRawSizesInput('');
@@ -1068,12 +1004,10 @@ export default function AdminDashboard() {
     ) => {
         const { name, value, type, checked } = e.target as HTMLInputElement;
 
-        // Create a mutable copy of the product state
         const targetProductState = isEditing ? { ...(editingProduct as Product) } : { ...newProduct };
 
         if (name === 'sizes') {
             setRawSizesInput(value);
-            // Directly update the `sizes` array in the product state
             const newSizesArray = processSizesInput(value);
             targetProductState.sizes = newSizesArray;
         } else if (name === "reviews") {
@@ -1091,7 +1025,6 @@ export default function AdminDashboard() {
             (targetProductState as any)[name] = value;
         }
 
-        // Update the respective state (newProduct or editingProduct)
         if (isEditing) {
             setEditingProduct(targetProductState);
         } else {
@@ -1134,21 +1067,21 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleToggleVisibility = async (productId: string) => { // Made async
+    const handleToggleVisibility = async (productId: string) => {
         const productToToggle = products.find(p => p.id === productId);
-        if (!productToToggle || !productToToggle._id) return; // Ensure _id is present
+        if (!productToToggle || !productToToggle._id) return;
 
         const updatedVisibility = !productToToggle.isVisibleInCollection;
         const updatedProductData = {
-            isVisibleInCollection: updatedVisibility // Only send the changed field
+            isVisibleInCollection: updatedVisibility
         };
 
         try {
-            const res = await updateProduct(productToToggle._id, updatedProductData); // Use _id for API call
+            const res = await updateProduct(productToToggle._id, updatedProductData);
             setProducts(prevProducts =>
                 prevProducts.map(product =>
                     product._id === res._id
-                        ? { ...res, id: res._id! } // Update with data from backend
+                        ? { ...res, id: res._id! }
                         : product
                 )
             );
@@ -1159,7 +1092,6 @@ export default function AdminDashboard() {
         }
     };
 
-    // UPDATED: handleToggleShipped function logic
     const handleToggleShipped = async (orderNumber: string) => {
         const orderToUpdate = orders.find(o => o.orderNumber === orderNumber);
         if (!orderToUpdate || !orderToUpdate._id) return;
@@ -1167,7 +1099,7 @@ export default function AdminDashboard() {
         const newShippedStatus = !orderToUpdate.shipped;
         const updatedOrderData = {
             shipped: newShippedStatus,
-            delivered: newShippedStatus ? orderToUpdate.delivered : false // If unshipped, delivered also becomes false
+            delivered: newShippedStatus ? orderToUpdate.delivered : false
         };
 
         try {
@@ -1188,7 +1120,6 @@ export default function AdminDashboard() {
         }
     };
 
-    // NEW: handleToggleDelivered function
     const handleToggleDelivered = async (orderNumber: string) => {
         const orderToUpdate = orders.find(o => o.orderNumber === orderNumber);
         if (!orderToUpdate || !orderToUpdate._id) return;
@@ -1375,8 +1306,6 @@ export default function AdminDashboard() {
         return 0;
     }, []);
 
-
-    // New OrderDetailsModal component (replacing the old one)
     const OrderDetailsModal = ({
         order,
         onClose,
@@ -1384,7 +1313,6 @@ export default function AdminDashboard() {
         order: Order;
         onClose: () => void;
     }) => {
-        // Create a ref for the content to be printed
         const printContentRef = useRef<HTMLDivElement>(null);
 
         const handlePrint = () => {
@@ -1466,8 +1394,7 @@ export default function AdminDashboard() {
 
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                    {/* Modal Header */}
+                <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
                     <div className="relative bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 rounded-t-2xl">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-t-2xl"></div>
                         <div className="relative">
@@ -1503,9 +1430,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    {/* Modal Content */}
                     <div ref={printContentRef} className="p-6 space-y-6 bg-gray-50">
-                        {/* Customer Information Card */}
                         <div>
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-5 py-3 border-b border-gray-100">
@@ -1563,7 +1488,6 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* Order Items Card */}
                         <div>
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                                 <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-3 border-b border-gray-100">
@@ -1574,7 +1498,7 @@ export default function AdminDashboard() {
                                         <h3 className="text-base font-semibold text-gray-900">Order Items</h3>
                                     </div>
                                 </div>
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto"> {/* Ensured overflow-x-auto for table */}
                                     <table className="w-full text-sm">
                                         <thead className="bg-gray-50/50">
                                             <tr>
@@ -1628,10 +1552,8 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* Order Summary Card */}
                         <div>
   <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    {/* Header */}
     <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-5 py-3 border-b border-gray-100">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -1641,34 +1563,28 @@ export default function AdminDashboard() {
       </div>
     </div>
 
-    {/* Body */}
     <div className="p-5">
       <div className="space-y-4">
-        {/* Subtotal */}
         <div className="flex items-center justify-between py-2">
           <span className="text-gray-600 font-medium text-sm">Subtotal</span>
           <span className="text-gray-900 font-semibold text-sm">${order.subtotal.toFixed(2)}</span>
         </div>
 
-        {/* Tax */}
         <div className="flex items-center justify-between py-2">
           <span className="text-gray-600 font-medium text-sm">Tax</span>
           <span className="text-gray-900 font-semibold text-sm">${order.tax.toFixed(2)}</span>
         </div>
 
-        {/* Shipping */}
         <div className="flex items-center justify-between py-2">
           <span className="text-gray-600 font-medium text-sm">Shipping</span>
           <span className="text-gray-900 font-semibold text-sm">${order.shipping.toFixed(2)}</span>
         </div>
 
-        {/* Discount */}
         <div className="flex items-center justify-between py-2">
           <span className="text-gray-600 font-medium text-sm">Discount</span>
           <span className="text-gray-900 font-semibold text-sm">-${order.discountAmount.toFixed(2)}</span>
         </div>
 
-        {/* Total */}
         <div className="border-t border-gray-200 pt-4 mt-4">
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold text-gray-900">Total</span>
@@ -1680,9 +1596,7 @@ export default function AdminDashboard() {
   </div>
 </div>
 
-                    </div> {/* End printContentRef container */}
-
-                    {/* Action Buttons */}
+                    </div>
                     <div className="flex items-center justify-end gap-3 pt-3 p-6 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
                         <button
                             onClick={onClose}
@@ -1806,40 +1720,40 @@ export default function AdminDashboard() {
 
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                             <div className="p-6 border-b border-gray-200">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="relative">
+                                <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 sm:space-x-4"> {/* Adjusted for mobile stacking */}
+                                    <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto"> {/* Adjusted for mobile stacking */}
+                                        <div className="relative w-full sm:w-auto">
                                             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                                             <input
                                                 type="text"
                                                 placeholder="Search products..."
                                                 value={""}
                                                 onChange={() => { }}
-                                                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             />
                                         </div>
-                                        <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto">
                                             <Filter className="w-4 h-4" />
                                             <span>Filter</span>
                                         </button>
                                     </div>
-                                    <div className="flex items-center space-x-4">
+                                    <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto"> {/* Adjusted for mobile stacking */}
                                         <button
                                             onClick={() => {
                                                 setShowAddProductModal(true);
                                                 setEditingProduct(null);
                                                 setNewProduct({
-                                                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
+                                                    id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {},
                                                     description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                                                 });
                                                 setRawSizesInput('');
                                             }}
-                                            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
                                         >
                                             <Plus className="w-4 h-4" />
                                             <span className="font-semibold">Add New Product</span>
                                         </button>
-                                        <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto">
                                             <Download className="w-4 h-4" />
                                             <span>Export</span>
                                         </button>
@@ -1853,8 +1767,7 @@ export default function AdminDashboard() {
                                         <tr><th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                                            {/* <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price/10ML</th> */} {/* REMOVED THIS */}
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sizes & Prices</th> {/* ADDED THIS */}
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sizes & Prices</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Stock</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Featured</th>
@@ -1873,8 +1786,7 @@ export default function AdminDashboard() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price.toFixed(2)}</td>
-                                                {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.pricePer10Ml.toFixed(2)}</td> */} {/* REMOVED THIS */}
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {/* ADDED THIS CELL */}
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {Object.entries(product.calculatedPrices).map(([size, price]) => (
                                                         <div key={size}>{size}: ${price.toFixed(2)}</div>
                                                     ))}
@@ -1958,7 +1870,7 @@ export default function AdminDashboard() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                             <div className="space-y-4">
                                 {sampleUsers.map((user, index) => (
-                                    <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                    <div key={index} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-gray-200 rounded-lg space-y-3 sm:space-y-0"> {/* Adjusted for mobile stacking */}
                                         <div className="flex items-center space-x-4">
                                             <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
                                                 {user.name.split(' ').map((n) => n[0]).join('')}
@@ -1968,19 +1880,19 @@ export default function AdminDashboard() {
                                                 <p className="text-sm text-gray-500">{user.email}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center space-x-6">
-                                            <div className="text-center">
+                                        <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-6 space-y-3 sm:space-y-0 w-full sm:w-auto"> {/* Adjusted for mobile stacking */}
+                                            <div className="text-center w-full sm:w-auto">
                                                 <p className="text-sm font-semibold text-gray-900">
                                                   {user.role}
                                                 </p>
                                                 <p className="text-xs text-gray-500">Role</p>
                                             </div>
-                                            <div className="text-center">
+                                            <div className="text-center w-full sm:w-auto">
                                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-md ${getStatusColor(user.status)}`}>
                                                     {user.status}
                                                 </span>
                                             </div>
-                                            <div className="text-center">
+                                            <div className="text-center w-full sm:w-auto">
                                                 <p className="text-sm font-semibold text-gray-900">{user.lastLogin}</p>
                                                 <p className="text-xs text-gray-500">Last Login</p>
                                             </div>
@@ -2010,23 +1922,23 @@ export default function AdminDashboard() {
 
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                             <div className="p-6 border-b border-gray-200">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="relative">
+                                <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 sm:space-x-4"> {/* Adjusted for mobile stacking */}
+                                    <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto"> {/* Adjusted for mobile stacking */}
+                                        <div className="relative w-full sm:w-auto">
                                             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                                             <input
                                                 type="text"
                                                 placeholder="Search customers..."
-                                                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             />
                                         </div>
-                                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-auto">
                                             <option>All Customers</option>
                                             <option>Active</option>
                                             <option>Inactive</option>
                                         </select>
                                     </div>
-                                    <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto">
                                         <Download className="w-4 h-4" />
                                         <span>Export</span>
                                     </button>
@@ -2136,7 +2048,7 @@ export default function AdminDashboard() {
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Stock Alerts</h3>
                             <div className="space-y-4">
                                 {[...lowStockProducts, ...outOfStockProducts].map(product => (
-                                    <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                    <div key={product.id} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-gray-200 rounded-lg space-y-3 sm:space-y-0"> {/* Adjusted for mobile stacking */}
                                         <div className="flex items-center space-x-4">
                                             <img src={product.images[0]} alt={product.name} className="w-12 h-12 rounded-lg object-cover" />
                                             <div>
@@ -2144,8 +2056,8 @@ export default function AdminDashboard() {
                                                 <p className="text-sm text-gray-500">{product.category}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center space-x-4">
-                                            <div className="text-right">
+                                        <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-3 sm:space-y-0 w-full sm:w-auto"> {/* Adjusted for mobile stacking */}
+                                            <div className="text-right w-full sm:w-auto">
                                                 <p className="font-semibold text-gray-900">{getTotalStock(product.sizeStocks)} units</p>
                                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-md ${getStatusColor(getTotalStock(product.sizeStocks) > 0 ? 'Low Stock' : 'Out of Stock')}`}>
                                                     {getTotalStock(product.sizeStocks) > 0 ? 'Low Stock' : 'Out of Stock'}
@@ -2153,7 +2065,7 @@ export default function AdminDashboard() {
                                             </div>
                                             <button
                                                 onClick={() => handleOpenRestockModal(product.id)}
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
                                             >
                                                 <span className="font-semibold">Restock</span>
                                             </button>
@@ -2197,8 +2109,8 @@ export default function AdminDashboard() {
                             />
                             <StatCard
                                 title="Conversion Rate"
-                                value="2.4%" // Placeholder
-                                change={8.1} // Placeholder
+                                value="2.4%"
+                                change={8.1}
                                 icon={TrendingUp}
                                 color="bg-indigo-500"
                             />
@@ -2313,7 +2225,6 @@ export default function AdminDashboard() {
                 );
 
             case 'orders':
-                // Filter orders based on search and status
                 const filteredOrders = orders.filter(order => {
                     const matchesSearch =
                         order.orderNumber.toLowerCase().includes(orderSearch.toLowerCase()) ||
@@ -2324,7 +2235,6 @@ export default function AdminDashboard() {
                     return matchesSearch && matchesStatus;
                 });
 
-                // Calculate counts for summary cards
                 const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
                 const processingOrdersCount = orders.filter(o => o.status === 'confirmed' && !o.shipped && !o.delivered).length;
                 const shippedOrdersCount = orders.filter(o => o.status === 'confirmed' && o.shipped && !o.delivered).length;
@@ -2337,7 +2247,6 @@ export default function AdminDashboard() {
                             <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
                             <p className="mt-1 text-gray-500">Manage and track customer orders</p>
                         </div>
-                        {/* Order status summary cards */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex items-center justify-between">
                                 <div>
@@ -2361,7 +2270,6 @@ export default function AdminDashboard() {
                                 <Package2 className="w-8 h-8 text-purple-500" />
                             </div>
 
-                            {/* NEW DELIVERED STAT CARD */}
                             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex items-center justify-between">
                                 <div>
                                     <p className="text-gray-500 font-medium">Delivered</p>
@@ -2369,7 +2277,6 @@ export default function AdminDashboard() {
                                 </div>
                                 <CheckCircle className="w-8 h-8 text-green-500" />
                             </div>
-                            {/* END NEW DELIVERED STAT CARD */}
                             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex items-center justify-between">
                                 <div>
                                     <p className="text-gray-500 font-medium">Cancelled</p>
@@ -2380,20 +2287,20 @@ export default function AdminDashboard() {
                         </div>
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                             <div className="p-6 border-b border-gray-200">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="relative">
+                                <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 sm:space-x-4"> {/* Adjusted for mobile stacking */}
+                                    <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto"> {/* Adjusted for mobile stacking */}
+                                        <div className="relative w-full sm:w-auto">
                                             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                                             <input
                                                 type="text"
                                                 placeholder="Search orders..."
                                                 value={orderSearch}
                                                 onChange={e => setOrderSearch(e.target.value)}
-                                                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             />
                                         </div>
                                         <select
-                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-auto"
                                             value={orderStatusFilter}
                                             onChange={e => setOrderStatusFilter(e.target.value as any)}
                                         >
@@ -2505,7 +2412,6 @@ export default function AdminDashboard() {
         }
     };
 
-    // This is the CORRECTED handleOrderStatusChange function
     const handleOrderStatusChange = async (orderNumber: string, newStatus: 'pending' | 'confirmed' | 'cancelled') => {
         const orderToUpdate = orders.find(o => o.orderNumber === orderNumber);
         if (!orderToUpdate || !orderToUpdate._id) return;
@@ -2543,16 +2449,33 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
+            {/* Overlay for mobile sidebar */}
+            {isAuthenticated && showSidebar && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+                    onClick={() => setShowSidebar(false)}
+                ></div>
+            )}
+
             {/* Sidebar */}
             {isAuthenticated && (
-                <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-                    <div className="p-6 border-b border-gray-200">
+                <div className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-50 transform ${
+                    showSidebar ? 'translate-x-0' : '-translate-x-full'
+                } lg:translate-x-0 transition-transform duration-200 ease-in-out`}>
+                    <div className="p-6 border-b border-gray-200 flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                                 <Package className="w-5 h-5 text-white" />
                             </div>
                             <h1 className="text-xl font-bold text-gray-900">Luxe Admin</h1>
                         </div>
+                        <button
+                            onClick={() => setShowSidebar(false)}
+                            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+                            title="Close sidebar"
+                        >
+                            <ChevronLeft className="w-5 h-5 text-gray-500" />
+                        </button>
                     </div>
 
                     <nav className="flex-1 p-4">
@@ -2565,10 +2488,11 @@ export default function AdminDashboard() {
                                             setShowAddProductModal(false);
                                             setEditingProduct(null);
                                             setNewProduct({
-                                                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {}, // REMOVED pricePer10Ml
+                                                id: '', name: '', category: 'Floral', price: 0, calculatedPrices: {}, sizeStocks: {},
                                                 description: '', notes: { top: [], heart: [], base: [] }, reviews: 0, sizes: ['50ml', '100ml'], images: [], isFeatured: false, inStock: true, isVisibleInCollection: true
                                             });
                                             setRawSizesInput('');
+                                            setShowSidebar(false); // Close sidebar on item click for mobile
                                         }}
                                         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
                                             currentView === item.id
@@ -2605,11 +2529,26 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            <div className="flex-1 overflow-hidden">
-                <div className="h-full overflow-y-auto p-8">
+            <div className="flex-1 overflow-hidden lg:ml-64"> {/* Added lg:ml-64 to push content when sidebar is visible on desktop */}
+                {/* Mobile Header (Hamburger Menu) */}
+                {isAuthenticated && (
+                    <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+                        <button
+                            onClick={() => setShowSidebar(true)}
+                            className="p-2 hover:bg-gray-100 rounded-lg"
+                            title="Open sidebar"
+                        >
+                            <Menu className="w-6 h-6 text-gray-700" />
+                        </button>
+                        <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+                        {/* Optionally add a user icon or other elements here for mobile */}
+                    </div>
+                )}
+
+                <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8"> {/* Adjusted padding for responsiveness */}
                     {isAuthenticated ? renderContent() : (
                         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                            <div className="max-w-md w-full space-y-8">
+                            <div className="max-w-md w-full space-y-8 p-4"> {/* Added padding to login form */}
                                 <div>
                                     <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
                                         Admin Login
@@ -2679,7 +2618,6 @@ export default function AdminDashboard() {
                 />
             )}
 
-            {/* Order Details Modal */}
             {showOrderDetailsModal && selectedOrder && (
                 <OrderDetailsModal
                     order={selectedOrder}
@@ -2690,7 +2628,6 @@ export default function AdminDashboard() {
     );
 }
 
-// Place this helper component above AdminDashboard (or anywhere outside renderContent)
 function OrderStatusDropdown({
     currentStatus,
     onChange,
@@ -2702,15 +2639,13 @@ function OrderStatusDropdown({
     const buttonRef = React.useRef<HTMLButtonElement>(null);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
-    // Close dropdown on outside click
     useEffect(() => {
         if (!open) return;
         const handler = (e: MouseEvent) => {
-            // Check if the click is outside both the button and the dropdown menu
             if (
                 buttonRef.current &&
                 !buttonRef.current.contains(e.target as Node) &&
-                !(e.target as HTMLElement).closest('.order-status-dropdown-menu') // Added class for menu
+                !(e.target as HTMLElement).closest('.order-status-dropdown-menu')
             ) {
                 setOpen(false);
             }
@@ -2719,18 +2654,16 @@ function OrderStatusDropdown({
         return () => window.removeEventListener('mousedown', handler);
     }, [open]);
 
-    // Set menu position when opening
     useEffect(() => {
         if (open && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
             setMenuPosition({
                 top: rect.bottom + window.scrollY,
-                left: rect.right - 160, // 160px is min-width of menu
+                left: rect.right - 160,
             });
         }
     }, [open]);
 
-    // Color mapping for status
     const statusColors = {
         pending: 'bg-yellow-100 text-yellow-700',
         confirmed: 'bg-green-100 text-green-600',
@@ -2743,7 +2676,6 @@ function OrderStatusDropdown({
         cancelled: 'bg-red-500',
     };
 
-    // Hover and selected background color mapping
     const statusHoverBg = {
         pending: 'hover:bg-yellow-100 hover:text-yellow-700',
         confirmed: 'hover:bg-green-100 hover:text-green-700',
